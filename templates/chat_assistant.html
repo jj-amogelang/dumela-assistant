@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        /* Reset default styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            min-height: 100vh;
+            color: #333;
+            padding-top: 70px; /* Adds space for fixed navbar */
+        }
+
+        /* Navbar styling */
+        .navbar {
+            width: 100%;
+            max-width: 900px;
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            border-radius: 10px;
+            background-color: #ffffff;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar h1 {
+            font-weight: bold;
+            color: #2575fc;
+            cursor: pointer;
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .navbar .fas {
+            font-size: 20px;
+            color: #2575fc;
+            cursor: pointer;
+        }
+
+        .navbar .nav-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .navbar .nav-buttons a {
+            text-decoration: none;
+            color: #333;
+            font-size: 18px;
+        }
+
+        /* Container and main content */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .main-content {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .main-content h2 {
+            color: #2575fc;
+            font-weight: 600;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .main-content p {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        /* Chat bot styling */
+        .chat-bot {
+            margin-top: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        #chatbox {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            max-height: 250px;
+        }
+
+        .frame {
+            padding: 10px 0;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* Chatbox input section */
+        .chatbox-input {
+            display: flex;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .chatbox-input i,
+        .chatbox-input img {
+            cursor: pointer;
+            color: #2575fc;
+        }
+
+        .chatbox-input input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        .chatbox-input input::placeholder {
+            color: #aaa;
+        }
+
+        /* User message styling */
+        .user-message {
+            background-color: #2575fc;
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: right;
+            margin: 5px;
+            max-width: 80%;
+            align-self: flex-end;
+        }
+
+        /* Bot message styling */
+        .bot-message {
+            background-color: #f1f1f1;
+            color: #333;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: left;
+            margin: 5px;
+            max-width: 80%;
+            align-self: flex-start;
+        }
+
+        .nurse-dashboard-button {
+            display: block;
+            width: 100%;
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .nurse-dashboard-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <div class="navbar">
+        <h1>DumelaHealth</h1>
+        <div class="nav-buttons">
+            <a href="/get-started">Home</a>
+            <a href="/help">Help</a>
+        </div>
+        <div class="icons">
+            <i class="fas fa-bell"></i>
+            <i class="fas fa-user-circle"></i>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Main content -->
+        <div class="main-content">
+            <h2>How can I help you today?</h2>
+            <p>Enter your query below, and our assistant will respond to you shortly.</p>
+
+            <!-- Chat bot section -->
+            <div class="chat-bot">
+                <div id="chatbox">
+                    <div id="chat"></div>
+                </div>
+
+                <div class="frame">
+                    <div class="chatbox-input">
+                        <i class="fa-regular fa-face-grin"></i>
+                        <i class="fa-sharp fa-solid fa-paperclip"></i>
+                        <input type="text" id="user-input" placeholder="Type your message here..." />
+                        <img src="{{ url_for('static', filename='images/sendicon.png') }}" id="startButton" onclick="sendMessage()" style="height: 50px; width: 50px;">
+                    </div>
+                </div>
+            </div>
+            <!-- Button to redirect to the nurse dashboard -->
+            <button class="nurse-dashboard-button" onclick="window.location.href='/dashboard'">Go to Nurse Dashboard</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/data.js') }}"></script>
+</body>
+
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearby Clinics</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .header {
+            background-color: #ffffff;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        .header nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 20px;
+        }
+        .header nav ul li {
+            display: inline;
+        }
+        .header nav ul li a {
+            text-decoration: none;
+            color: #333;
+            font-size: 16px;
+        }
+        .header nav ul li a:hover {
+            color: #4CAF50;
+        }
+        .location-info {
+            padding: 20px;
+            text-align: center;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+            border-radius: 5px;
+        }
+        #map {
+            height: 80vh;
+            width: 100%;
+            margin: 20px 0;
+        }
+        .clinic-details {
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+        }
+        .clinic-details h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Nearby Clinics</h1>
+        <nav>
+            <ul>
+                <li><a href="/get-started">Home</a></li>
+                <li><a href="/settings">Settings</a></li>
+                <li><a href="/help">Help</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="location-info" id="location-info">
+        <h2>Your Location</h2>
+        <p id="user-location">Fetching your location...</p>
+    </div>
+
+    <div id="map"></div>
+    <div class="clinic-details" id="clinic-details">
+        <h2>Clinic Details</h2>
+        <p>Select a clinic on the map to view details.</p>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Get user's location from session storage
+        const userLat = sessionStorage.getItem('userLat');
+        const userLng = sessionStorage.getItem('userLng');
+
+        if (userLat && userLng) {
+            // Reverse geocoding to get the location name
+            const apiKey = 'ef93ffe8bf8d4e809578cc798fdfc7c4'; // Replace with your OpenCage API key
+            fetch(`https://api.opencagedata.com/geocode/v1/json?q=${userLat}+${userLng}&key=${apiKey}`)
+                .then(response => response.json())
+                .then(data => {
+                    const locationName = data.results[0].formatted;
+                    document.getElementById('user-location').textContent = locationName;
+                })
+                .catch(error => {
+                    console.error('Error fetching location name:', error);
+                    document.getElementById('user-location').textContent = `Latitude: ${userLat}, Longitude: ${userLng}`;
+                });
+
+            // Initialize the map
+            const map = L.map('map').setView([userLat, userLng], 13);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Add a marker for the user's location
+            L.marker([userLat, userLng]).addTo(map)
+                .bindPopup('You are here')
+                .openPopup();
+
+            // Fetch nearby clinics (replace with your API endpoint)
+            fetch(`/api/nearby-clinics?lat=${userLat}&lng=${userLng}`)
+                .then(response => response.json())
+                .then(clinics => {
+                    clinics.forEach(clinic => {
+                        const marker = L.marker([clinic.lat, clinic.lng]).addTo(map)
+                            .bindPopup(`<b>${clinic.name}</b><br>${clinic.address}<br><a href="${clinic.directions}" target="_blank">Get Directions</a>`);
+                        marker.on('click', () => {
+                            document.getElementById('clinic-details').innerHTML = `
+                                <h2>${clinic.name}</h2>
+                                <p><strong>Address:</strong> ${clinic.address}</p>
+                                <p><strong>Services:</strong> ${clinic.services}</p>
+                                <p><strong>Operating Hours:</strong> ${clinic.hours}</p>
+                                <a href="${clinic.directions}" target="_blank">Get Directions</a>
+                            `;
+                        });
+                    });
+                });
+        } else {
+            alert('Location not available. Please allow location access on the Get Started page.');
+        }
+    </script>
+</body>
+</html>

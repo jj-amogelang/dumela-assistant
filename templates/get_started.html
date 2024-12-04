@@ -1,0 +1,257 @@
+<!-- templates/get_started.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Chat Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .header {
+            background-color: #ffffff;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        .header nav ul {
+           list-style: none;
+           margin: 0;
+           padding: 0;
+           display: flex;
+           gap: 20px;
+        }
+
+        .header nav ul li {
+            display: inline;
+        }
+        .header nav ul li a {
+            text-decoration: none;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .header nav ul li a:hover {
+            color: #4CAF50;
+        }
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            padding: 20px;
+        }
+        .features h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .feature {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+            padding: 20px;
+            text-align: center;
+            width: 200px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        .feature i {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .feature p {
+            font-size: 16px;
+            margin: 10px 0;
+            color: #333;
+        }
+        .feature button {
+            margin-top: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .feature button:hover {
+            background-color: #0056b3;
+        }
+        .appointment {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            padding: 20px;
+            text-align: center;
+            width: 50%;
+        }
+        .appointment h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .doctor-card {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .doctor-card img {
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .footer {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            background: #ffffff;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .footer button {
+            background-color: #ff4c4c;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 10px 20px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .footer button i {
+            margin-right: 10px;
+        }
+        .footer button:hover {
+            background-color: #e60000;
+        }
+        .discover-button {
+            background-color: #007bff;
+            color: white;
+            border-radius: 25px;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            width: fit-content;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .discover-button img {
+            width: 30px; /* Adjust icon size */
+            margin-right: 10px;
+        }
+        .discover-button .arrow {
+            background: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>DumelaHealth</h1>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/settings">Settings</a></li>
+                <li><a href="/help">Help</a></li>
+            </ul>
+        </nav>
+        <i class="fas fa-bell"></i>
+    </div>
+
+    <!-- Discover Button -->
+    <div class="discover-button" onclick="window.location.href='/chat-assistant'">
+        <img src="{{ url_for('static', filename='images/chat.png') }}" alt="Chat Assistant Icon">
+        <span>Discover Our Healthcare Chat Assistant</span>
+        <div class="arrow">
+            <i class="fas fa-chevron-right"></i>
+        </div>
+    </div>
+
+    <div class="features">
+        <div class="feature">
+            <i class="fas fa-bell"></i>
+            <p>Medication Reminders</p>
+            <button onclick="location.href='#'">Set Reminders</button>
+        </div>
+        <div class="feature">
+            <i class="fas fa-comments"></i>
+            <p>Dumela Assistant</p>
+            <button onclick="location.href='/dumela-assistant'">Start Chat</button>
+        </div>
+        <div class="feature">
+            <i class="fas fa-user-check"></i>
+            <p>Profile Check</p>
+            <button onclick="location.href='#'">Check Profile</button>
+        </div>
+        <div class="feature">
+            <i class="fas fa-clinic-medical"></i>
+            <p>Nearby Clinics</p>
+            <button onclick="location.href='/nearby-clinics'">Find Clinics</button>
+        </div>
+        <div class="feature">
+            <i class="fas fa-info-circle"></i>
+            <p>Stay Informed</p>
+            <button onclick="location.href='/stay-informed'">Learn More</button>
+        </div>
+    </div>
+
+    <div class="appointment">
+        <h2>Appointment Scheduling</h2>
+        <div class="doctor-card">
+            <img src="https://via.placeholder.com/60" alt="Doctor">
+            <div>
+                <strong>Leslie Alexander</strong><br>
+                <small>Headaches And Migraines</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <button><i class="fas fa-exclamation-triangle"></i>Emergency</button>
+    </div>
+
+    <script>
+        // Request user's location permission
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const { latitude, longitude } = position.coords;
+                sessionStorage.setItem('userLat', latitude);
+                sessionStorage.setItem('userLng', longitude);
+            }, error => {
+                console.error('Error getting location:', error);
+            });
+        } else {
+            console.error('Geolocation is not supported by this browser.');
+        }
+    </script>
+</body>
+</html>

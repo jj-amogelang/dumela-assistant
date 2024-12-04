@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Healthcare Assistant</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #56ccf2, #2f80ed);
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .assistant-container {
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #ffffff;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+        }
+
+        p {
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            background-color: #ffffff;
+            color: #2f80ed;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2f80ed;
+            color: #ffffff;
+            transform: scale(1.05);
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="assistant-container">
+        <h1>Welcome to Your AI Healthcare Assistant</h1>
+        <p>Click the button below to start your conversation with the assistant.</p>
+        <button id="start-btn">Start Conversation</button>
+        <div class="status" id="status">Waiting for you to begin...</div>
+    </div>
+
+    <script>
+        const startConversation = async () => {
+            const statusDiv = document.getElementById("status");
+
+            try {
+                const response = await fetch('/start-conversation');
+                const data = await response.json();
+                const assistantMessage = data.assistant;
+
+                const utterance = new SpeechSynthesisUtterance(assistantMessage);
+                window.speechSynthesis.speak(utterance);
+                statusDiv.textContent = `Assistant: ${assistantMessage}`;
+
+                captureUserResponse();
+            } catch (error) {
+                statusDiv.textContent = "Error starting the assistant. Please try again!";
+                console.error(error);
+            }
+        };
+
+        const captureUserResponse = () => {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+
+            recognition.onresult = async (event) => {
+                const userMessage = event.results[0][0].transcript;
+                const statusDiv = document.getElementById("status");
+                statusDiv.textContent = `You: ${userMessage}`;
+                console.log("User:", userMessage);
+
+                try {
+                    const response = await fetch('/continue-conversation', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: userMessage })
+                    });
+
+                    const data = await response.json();
+                    const assistantResponse = data.assistant;
+
+                    const utterance = new SpeechSynthesisUtterance(assistantResponse);
+                    window.speechSynthesis.speak(utterance);
+                    statusDiv.textContent = `Assistant: ${assistantResponse}`;
+
+                    captureUserResponse();
+                } catch (error) {
+                    statusDiv.textContent = "Error continuing the conversation. Please try again!";
+                    console.error(error);
+                }
+            };
+
+            recognition.start();
+        };
+
+        document.getElementById("start-btn").addEventListener("click", startConversation);
+    </script>
+</body>
+</html>
