@@ -365,3 +365,10 @@ try:
     print("Geospatial index created on the location field.")
 except errors.OperationFailure as e:
     print(f"Error creating geospatial index: {e}")
+
+# Create geospatial index
+try:
+    clinics_collection.create_index([("location", "2dsphere")])
+    print("Geospatial index created successfully.")
+except errors.OperationFailure as e:
+    print(f"Error creating geospatial index: {e}")

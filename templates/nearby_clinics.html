@@ -6,6 +6,9 @@
     <title>Nearby Clinics</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -30,41 +33,44 @@
             margin: 0;
             padding: 0;
             display: flex;
-            gap: 20px;
         }
         .header nav ul li {
-            display: inline;
+            margin-left: 20px;
         }
         .header nav ul li a {
             text-decoration: none;
             color: #333;
-            font-size: 16px;
-        }
-        .header nav ul li a:hover {
-            color: #4CAF50;
         }
         .location-info {
+            background-color: #ffffff;
             padding: 20px;
-            text-align: center;
+            margin: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .location-info i {
+            font-size: 24px;
+            margin-right: 10px;
+            color: #2f80ed;
+        }
+        .location-info h2 {
+            font-size: 18px;
+            margin: 0;
+        }
+        .filters {
+            padding: 20px;
             background-color: #ffffff;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin: 20px;
-            border-radius: 5px;
+            margin-bottom: 20px;
         }
         #map {
             height: 80vh;
             width: 100%;
-            margin: 20px 0;
         }
-        .clinic-details {
+        #clinic-details {
             padding: 20px;
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin: 20px;
-        }
-        .clinic-details h2 {
-            margin-top: 0;
         }
     </style>
 </head>
@@ -73,77 +79,131 @@
         <h1>Nearby Clinics</h1>
         <nav>
             <ul>
-                <li><a href="/get-started">Home</a></li>
-                <li><a href="/settings">Settings</a></li>
-                <li><a href="/help">Help</a></li>
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
             </ul>
         </nav>
     </div>
-
     <div class="location-info" id="location-info">
-        <h2>Your Location</h2>
-        <p id="user-location">Fetching your location...</p>
+        <i class="fas fa-map-marker-alt"></i>
+        <div>
+            <h2>Your Location</h2>
+            <p id="user-location">Fetching your location...</p>
+        </div>
     </div>
-
+    <div class="filters">
+        <label for="services">Filter by Services:</label>
+        <select id="services" onchange="filterClinics()">
+            <option value="">All</option>
+            <option value="General Practice">General Practice</option>
+            <option value="Pediatrics">Pediatrics</option>
+            <option value="Dermatology">Dermatology</option>
+            <option value="Cardiology">Cardiology</option>
+        </select>
+        <label for="hours">Filter by Operating Hours:</label>
+        <select id="hours" onchange="filterClinics()">
+            <option value="">All</option>
+            <option value="Mon-Fri 9am-5pm">Mon-Fri 9am-5pm</option>
+            <option value="Mon-Fri 8am-6pm">Mon-Fri 8am-6pm</option>
+        </select>
+    </div>
     <div id="map"></div>
-    <div class="clinic-details" id="clinic-details">
-        <h2>Clinic Details</h2>
-        <p>Select a clinic on the map to view details.</p>
-    </div>
-
+    <div id="clinic-details"></div>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
     <script>
-        // Get user's location from session storage
-        const userLat = sessionStorage.getItem('userLat');
-        const userLng = sessionStorage.getItem('userLng');
+        const map = L.map('map').setView([0, 0], 13);
 
-        if (userLat && userLng) {
-            // Reverse geocoding to get the location name
-            const apiKey = 'ef93ffe8bf8d4e809578cc798fdfc7c4'; // Replace with your OpenCage API key
-            fetch(`https://api.opencagedata.com/geocode/v1/json?q=${userLat}+${userLng}&key=${apiKey}`)
-                .then(response => response.json())
-                .then(data => {
-                    const locationName = data.results[0].formatted;
-                    document.getElementById('user-location').textContent = locationName;
-                })
-                .catch(error => {
-                    console.error('Error fetching location name:', error);
-                    document.getElementById('user-location').textContent = `Latitude: ${userLat}, Longitude: ${userLng}`;
-                });
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
 
-            // Initialize the map
-            const map = L.map('map').setView([userLat, userLng], 13);
+        // Add a marker for the user's location
+        let userMarker = null;
+        let clinicMarkers = L.markerClusterGroup();
+        let allClinics = [];
 
-            // Add OpenStreetMap tiles
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-
-            // Add a marker for the user's location
-            L.marker([userLat, userLng]).addTo(map)
+        navigator.geolocation.getCurrentPosition(position => {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+            userMarker = L.marker([userLat, userLng]).addTo(map)
                 .bindPopup('You are here')
                 .openPopup();
+            map.setView([userLat, userLng], 13);
+
+            // Reverse geocode to get the address
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLng}`)
+                .then(response => response.json())
+                .then(data => {
+                    const address = data.display_name;
+                    document.getElementById('user-location').textContent = address;
+                })
+                .catch(error => {
+                    console.error('Error fetching address:', error);
+                    document.getElementById('user-location').textContent = `Latitude: ${userLat}, Longitude: ${userLng}`;
+                });
 
             // Fetch nearby clinics (replace with your API endpoint)
             fetch(`/api/nearby-clinics?lat=${userLat}&lng=${userLng}`)
                 .then(response => response.json())
                 .then(clinics => {
-                    clinics.forEach(clinic => {
-                        const marker = L.marker([clinic.lat, clinic.lng]).addTo(map)
-                            .bindPopup(`<b>${clinic.name}</b><br>${clinic.address}<br><a href="${clinic.directions}" target="_blank">Get Directions</a>`);
-                        marker.on('click', () => {
-                            document.getElementById('clinic-details').innerHTML = `
-                                <h2>${clinic.name}</h2>
-                                <p><strong>Address:</strong> ${clinic.address}</p>
-                                <p><strong>Services:</strong> ${clinic.services}</p>
-                                <p><strong>Operating Hours:</strong> ${clinic.hours}</p>
-                                <a href="${clinic.directions}" target="_blank">Get Directions</a>
-                            `;
-                        });
-                    });
+                    console.log('Clinics data:', clinics); // Log the clinics data
+                    allClinics = clinics;
+                    addClinicMarkers(clinics);
+                })
+                .catch(error => {
+                    console.error('Error fetching nearby clinics:', error);
                 });
-        } else {
-            alert('Location not available. Please allow location access on the Get Started page.');
+        });
+
+        function addClinicMarkers(clinics) {
+            clinicMarkers.clearLayers();
+            clinics.forEach(clinic => {
+                if (clinic.lat && clinic.lng) {
+                    const marker = L.marker([clinic.lat, clinic.lng])
+                        .bindPopup(`<b>${clinic.name}</b><br>${clinic.address}<br><a href="#" onclick="getDirections(${clinic.lat}, ${clinic.lng})">Get Directions</a>`);
+                    marker.on('click', () => {
+                        document.getElementById('clinic-details').innerHTML = `
+                            <h2>${clinic.name}</h2>
+                            <p><strong>Address:</strong> ${clinic.address}</p>
+                            <p><strong>Services:</strong> ${clinic.services}</p>
+                            <p><strong>Operating Hours:</strong> ${clinic.hours}</p>
+                            <a href="#" onclick="getDirections(${clinic.lat}, ${clinic.lng})">Get Directions</a>
+                        `;
+                    });
+                    clinicMarkers.addLayer(marker);
+                } else {
+                    console.error(`Invalid clinic coordinates: ${clinic.name}, ${clinic.lat}, ${clinic.lng}`);
+                }
+            });
+            map.addLayer(clinicMarkers);
+        }
+
+        function filterClinics() {
+            const serviceFilter = document.getElementById('services').value;
+            const hoursFilter = document.getElementById('hours').value;
+            const filteredClinics = allClinics.filter(clinic => {
+                return (serviceFilter === '' || clinic.services.includes(serviceFilter)) &&
+                       (hoursFilter === '' || clinic.hours === hoursFilter);
+            });
+            addClinicMarkers(filteredClinics);
+        }
+
+        function getDirections(clinicLat, clinicLng) {
+            if (userMarker) {
+                const userLatLng = userMarker.getLatLng();
+                L.Routing.control({
+                    waypoints: [
+                        L.latLng(userLatLng.lat, userLatLng.lng),
+                        L.latLng(clinicLat, clinicLng)
+                    ],
+                    routeWhileDragging: true
+                }).addTo(map);
+            } else {
+                alert('User location not available.');
+            }
         }
     </script>
 </body>
